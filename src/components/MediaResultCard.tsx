@@ -18,17 +18,18 @@ export function MediaResultCard({ data, onReset }: MediaResultCardProps) {
   const handleDownload = (format: MediaFormat) => {
     setDownloadingId(format.id);
 
-    const downloadUrl = `/api/stream?url=${encodeURIComponent(format.url)}&filename=${encodeURIComponent(data.title)}&format=${format.format}`;
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = `${data.title.replace(/[^a-zA-Z0-9_-]/g, "_").substring(0, 50)}.${format.format}`;
+    // /api/download-file re-fetches a fresh signed URL server-side
+    // and pipes the entire stream without IP-bound redirect issues
+    const downloadHref = `/api/download-file?mediaUrl=${encodeURIComponent(data.url)}&formatId=${encodeURIComponent(format.id)}&format=${format.format}&filename=${encodeURIComponent(data.title)}`;
+
+    const link = document.createElement('a');
+    link.href = downloadHref;
+    link.download = `${data.title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50)}.${format.format}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    setTimeout(() => {
-      setDownloadingId(null);
-    }, 2000);
+    setTimeout(() => setDownloadingId(null), 3000);
   };
 
   return (
