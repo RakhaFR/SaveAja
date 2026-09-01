@@ -11,19 +11,19 @@ export function FaqSection() {
   const faqs = [
     {
       q: "Bagaimana cara mendownload video atau audio dengan SaveAja?",
-      a: "Cukup salin (copy) link video dari TikTok, Instagram Reels, atau YouTube, lalu tempel (paste) ke kolom input di atas. Klik tombol Download, pilih format MP4 (Video) atau MP3 (Audio), lalu klik Unduh.",
+      a: "Cukup salin link video dari TikTok, Instagram Reels, atau YouTube, lalu tempel ke kolom input. Klik DOWNLOAD, pilih format MP4 (Video) atau MP3 (Audio), lalu klik Unduh.",
     },
     {
       q: "Apakah video TikTok yang diunduh bebas watermark?",
-      a: "Ya, sistem kami secara otomatis menghapus tanda air / watermark TikTok sehingga Anda mendapatkan file video bersih dalam resolusi HD.",
+      a: "Ya, sistem kami secara otomatis menghapus watermark TikTok sehingga Anda mendapatkan file video bersih dalam resolusi HD.",
     },
     {
       q: "Apakah layanan ini 100% gratis?",
-      a: "Ya! SaveAja sepenuhnya gratis untuk digunakan tanpa batasan harian, tanpa perlu registrasi, dan tanpa instalasi aplikasi tambahan.",
+      a: "Ya! SaveAja sepenuhnya gratis untuk digunakan tanpa batasan harian dan tanpa perlu registrasi akun.",
     },
     {
       q: "Di mana file hasil download akan disimpan?",
-      a: "File akan langsung masuk ke folder 'Downloads' atau 'Unduhan' di perangkat komputer/laptop Anda, atau langsung ke galeri / file manager di smartphone Android / iPhone Anda.",
+      a: "File akan langsung masuk ke folder Downloads / Unduhan di browser perangkat Anda.",
     },
     {
       q: "Mengapa video tertentu tidak bisa diproses?",
@@ -34,11 +34,11 @@ export function FaqSection() {
   return (
     <section className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6">
       <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-          Pertanyaan yang Sering Diajukan (FAQ)
+        <h2 className="font-mono text-xl font-bold uppercase tracking-tight text-white sm:text-2xl">
+          [ FAQ / PANDUAN ]
         </h2>
-        <p className="mt-2 text-xs text-zinc-400 sm:text-sm">
-          Semua yang perlu Anda ketahui seputar penggunaan SaveAja.
+        <p className="mt-1 font-mono text-xs text-zinc-400">
+          Pertanyaan umum seputar penggunaan SaveAja
         </p>
       </div>
 
@@ -47,12 +47,12 @@ export function FaqSection() {
           <AccordionItem
             key={index}
             value={`item-${index}`}
-            className="rounded-xl border border-white/10 bg-zinc-900/60 px-4 backdrop-blur-md transition-colors data-[state=open]:border-indigo-500/30 data-[state=open]:bg-zinc-900/90"
+            className="retro-box p-3.5 transition-none"
           >
-            <AccordionTrigger className="text-left text-sm font-semibold text-zinc-200 hover:text-white hover:no-underline">
+            <AccordionTrigger className="font-mono text-xs font-bold text-white hover:no-underline sm:text-sm">
               {faq.q}
             </AccordionTrigger>
-            <AccordionContent className="text-xs leading-relaxed text-zinc-400">
+            <AccordionContent className="pt-2 text-xs leading-relaxed text-zinc-300">
               {faq.a}
             </AccordionContent>
           </AccordionItem>

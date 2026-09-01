@@ -1,23 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { MediaMetadata, MediaFormat } from "@/lib/types";
-import {
-  IconBrandTiktok,
-  IconBrandInstagram,
-  IconBrandYoutube,
-  IconVideo,
-  IconMusic,
-  IconDownload,
-  IconCheck,
-  IconPlayerPlay,
-  IconEye,
-  IconHeart,
-  IconClock,
-  IconExternalLink,
-} from "@tabler/icons-react";
-import confetti from "canvas-confetti";
 
 interface MediaResultCardProps {
   data: MediaMetadata;
@@ -31,50 +15,9 @@ export function MediaResultCard({ data, onReset }: MediaResultCardProps) {
   const videoFormats = data.formats.filter((f) => f.type === "video");
   const audioFormats = data.formats.filter((f) => f.type === "audio");
 
-  const getPlatformInfo = (platform: string) => {
-    switch (platform) {
-      case "tiktok":
-        return {
-          name: "TikTok",
-          icon: <IconBrandTiktok className="size-4 text-rose-400" />,
-          color: "border-rose-500/30 bg-rose-500/10 text-rose-300",
-        };
-      case "instagram":
-        return {
-          name: "Instagram",
-          icon: <IconBrandInstagram className="size-4 text-pink-400" />,
-          color: "border-pink-500/30 bg-pink-500/10 text-pink-300",
-        };
-      case "youtube":
-        return {
-          name: "YouTube",
-          icon: <IconBrandYoutube className="size-4 text-red-500" />,
-          color: "border-red-500/30 bg-red-500/10 text-red-300",
-        };
-      default:
-        return {
-          name: "Video",
-          icon: <IconVideo className="size-4 text-indigo-400" />,
-          color: "border-indigo-500/30 bg-indigo-500/10 text-indigo-300",
-        };
-    }
-  };
-
   const handleDownload = (format: MediaFormat) => {
     setDownloadingId(format.id);
 
-    try {
-      confetti({
-        particleCount: 40,
-        spread: 60,
-        origin: { y: 0.7 },
-        colors: ["#6366f1", "#3b82f6", "#10b981", "#ec4899"],
-      });
-    } catch {
-      // Confetti fallback
-    }
-
-    // Trigger direct stream download proxy
     const downloadUrl = `/api/stream?url=${encodeURIComponent(format.url)}&filename=${encodeURIComponent(data.title)}&format=${format.format}`;
     const link = document.createElement("a");
     link.href = downloadUrl;
@@ -85,168 +28,104 @@ export function MediaResultCard({ data, onReset }: MediaResultCardProps) {
 
     setTimeout(() => {
       setDownloadingId(null);
-    }, 2500);
+    }, 2000);
   };
 
-  const platformInfo = getPlatformInfo(data.platform);
-
   return (
-    <div className="w-full rounded-2xl border border-white/10 bg-zinc-900/90 p-5 shadow-2xl backdrop-blur-xl transition-all sm:p-7">
+    <div className="retro-box w-full p-5 sm:p-7">
       {/* Header Info */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-        <div className="flex items-center gap-2">
-          <span
-            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${platformInfo.color}`}
-          >
-            {platformInfo.icon}
-            <span>{platformInfo.name}</span>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b-2 border-white/20 pb-4">
+        <div className="flex items-center gap-2 font-mono text-xs">
+          <span className="border-2 border-white bg-white px-2.5 py-0.5 font-bold text-black uppercase">
+            {data.platform}
           </span>
           {data.duration && (
-            <span className="flex items-center gap-1 rounded-full border border-white/10 bg-zinc-800/80 px-2.5 py-1 text-xs text-zinc-300">
-              <IconClock className="size-3 text-zinc-400" />
-              <span>{data.duration}</span>
+            <span className="border border-white/40 bg-zinc-900 px-2 py-0.5 text-zinc-300">
+              TIME: {data.duration}
             </span>
           )}
         </div>
 
         <button
           onClick={onReset}
-          className="text-xs font-medium text-zinc-400 transition-colors hover:text-white"
+          className="font-mono text-xs font-bold text-zinc-400 hover:text-white underline underline-offset-4"
         >
-          Download Link Lain →
+          [+ RESET LINK]
         </button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
         {/* Thumbnail Preview */}
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-950 md:col-span-5">
+        <div className="relative aspect-video w-full overflow-hidden border-2 border-white bg-black md:col-span-5">
           {data.thumbnail ? (
             <img
               src={data.thumbnail}
               alt={data.title}
-              className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+              className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-zinc-500">
-              <IconPlayerPlay className="size-10 opacity-40" />
+            <div className="flex h-full w-full items-center justify-center font-mono text-xs text-zinc-500">
+              NO PREVIEW
             </div>
           )}
-
-          {/* Quick Play/View indicator */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 backdrop-blur-[2px] transition-opacity hover:opacity-100">
-            <a
-              href={data.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-950 shadow-lg transition-transform hover:scale-105"
-            >
-              <IconExternalLink className="size-3.5" />
-              Buka Sumber Asli
-            </a>
-          </div>
         </div>
 
         {/* Media Details & Download Options */}
         <div className="flex flex-col justify-between md:col-span-7">
           <div>
-            {/* Title */}
-            <h2 className="line-clamp-2 text-lg font-bold text-white sm:text-xl">
+            <h2 className="line-clamp-2 text-base font-bold text-white sm:text-lg">
               {data.title}
             </h2>
 
-            {/* Author info */}
-            <div className="mt-2.5 flex items-center gap-2.5">
-              {data.authorAvatar && (
-                <img
-                  src={data.authorAvatar}
-                  alt={data.author}
-                  className="size-6 rounded-full border border-white/20 object-cover"
-                />
-              )}
-              <span className="text-sm font-medium text-zinc-300">
-                {data.author}
-              </span>
-              {data.authorUsername && (
-                <span className="text-xs text-zinc-500">
-                  {data.authorUsername}
-                </span>
-              )}
+            <div className="mt-2 flex items-center gap-2 font-mono text-xs text-zinc-400">
+              <span>BY: {data.author}</span>
+              {data.authorUsername && <span>({data.authorUsername})</span>}
             </div>
-
-            {/* Stats if available */}
-            {data.stats && (data.stats.views || data.stats.likes) ? (
-              <div className="mt-3 flex items-center gap-4 text-xs text-zinc-400">
-                {Boolean(data.stats.views) && (
-                  <div className="flex items-center gap-1">
-                    <IconEye className="size-3.5 text-zinc-500" />
-                    <span>{Number(data.stats.views).toLocaleString("id-ID")} views</span>
-                  </div>
-                )}
-                {Boolean(data.stats.likes) && (
-                  <div className="flex items-center gap-1">
-                    <IconHeart className="size-3.5 text-rose-500/70" />
-                    <span>{Number(data.stats.likes).toLocaleString("id-ID")} likes</span>
-                  </div>
-                )}
-              </div>
-            ) : null}
           </div>
 
           {/* Format Selection Tabs */}
           <div className="mt-6">
-            <div className="flex rounded-xl border border-white/10 bg-zinc-950/80 p-1">
+            <div className="flex border-2 border-white bg-black">
               <button
                 type="button"
                 onClick={() => setActiveTab("video")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold transition-all ${
+                className={`flex-1 py-2 font-mono text-xs font-black uppercase transition-colors ${
                   activeTab === "video"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-white text-black"
+                    : "bg-black text-white hover:bg-zinc-900"
                 }`}
               >
-                <IconVideo className="size-4" />
-                <span>Video (MP4)</span>
-                {videoFormats.length > 0 && (
-                  <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[10px]">
-                    {videoFormats.length}
-                  </span>
-                )}
+                VIDEO (MP4) [{videoFormats.length}]
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("audio")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold transition-all ${
+                className={`flex-1 py-2 font-mono text-xs font-black uppercase transition-colors ${
                   activeTab === "audio"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-white text-black"
+                    : "bg-black text-white hover:bg-zinc-900"
                 }`}
               >
-                <IconMusic className="size-4" />
-                <span>Audio (MP3)</span>
-                {audioFormats.length > 0 && (
-                  <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[10px]">
-                    {audioFormats.length}
-                  </span>
-                )}
+                AUDIO (MP3) [{audioFormats.length}]
               </button>
             </div>
 
             {/* Format List */}
-            <div className="mt-3.5 space-y-2">
+            <div className="mt-4 space-y-2.5">
               {activeTab === "video" ? (
                 videoFormats.length > 0 ? (
                   videoFormats.map((format) => (
                     <div
                       key={format.id}
-                      className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-950/40 p-3 transition-colors hover:border-white/10 hover:bg-zinc-950/70"
+                      className="flex items-center justify-between border-2 border-white/20 bg-zinc-950 p-3"
                     >
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-zinc-100">
+                        <span className="font-mono text-xs font-bold text-white">
                           {format.quality}
                         </span>
                         {format.note && (
-                          <span className="text-xs text-zinc-400">
+                          <span className="text-[11px] text-zinc-400">
                             {format.note}
                           </span>
                         )}
@@ -255,39 +134,29 @@ export function MediaResultCard({ data, onReset }: MediaResultCardProps) {
                       <button
                         onClick={() => handleDownload(format)}
                         disabled={downloadingId === format.id}
-                        className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-indigo-500 active:scale-95 disabled:opacity-50"
+                        className="retro-btn px-4 py-1.5 font-mono text-xs disabled:opacity-50"
                       >
-                        {downloadingId === format.id ? (
-                          <>
-                            <IconCheck className="size-3.5 animate-bounce" />
-                            <span>Menyimpan...</span>
-                          </>
-                        ) : (
-                          <>
-                            <IconDownload className="size-3.5" />
-                            <span>Unduh MP4</span>
-                          </>
-                        )}
+                        {downloadingId === format.id ? "SAVING..." : "DOWNLOAD MP4"}
                       </button>
                     </div>
                   ))
                 ) : (
-                  <p className="py-4 text-center text-xs text-zinc-500">
-                    Opsi video tidak tersedia untuk media ini.
+                  <p className="py-4 text-center font-mono text-xs text-zinc-500">
+                    Opsi video tidak tersedia.
                   </p>
                 )
               ) : audioFormats.length > 0 ? (
                 audioFormats.map((format) => (
                   <div
                     key={format.id}
-                    className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-950/40 p-3 transition-colors hover:border-white/10 hover:bg-zinc-950/70"
+                    className="flex items-center justify-between border-2 border-white/20 bg-zinc-950 p-3"
                   >
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-zinc-100">
+                      <span className="font-mono text-xs font-bold text-white">
                         {format.quality}
                       </span>
                       {format.note && (
-                        <span className="text-xs text-zinc-400">
+                        <span className="text-[11px] text-zinc-400">
                           {format.note}
                         </span>
                       )}
@@ -296,25 +165,15 @@ export function MediaResultCard({ data, onReset }: MediaResultCardProps) {
                     <button
                       onClick={() => handleDownload(format)}
                       disabled={downloadingId === format.id}
-                      className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-emerald-500 active:scale-95 disabled:opacity-50"
+                      className="retro-btn px-4 py-1.5 font-mono text-xs disabled:opacity-50"
                     >
-                      {downloadingId === format.id ? (
-                        <>
-                          <IconCheck className="size-3.5 animate-bounce" />
-                          <span>Menyimpan...</span>
-                        </>
-                      ) : (
-                        <>
-                          <IconDownload className="size-3.5" />
-                          <span>Unduh MP3</span>
-                        </>
-                      )}
+                      {downloadingId === format.id ? "SAVING..." : "DOWNLOAD MP3"}
                     </button>
                   </div>
                 ))
               ) : (
-                <p className="py-4 text-center text-xs text-zinc-500">
-                  Opsi audio tidak tersedia untuk media ini.
+                <p className="py-4 text-center font-mono text-xs text-zinc-500">
+                  Opsi audio tidak tersedia.
                 </p>
               )}
             </div>
