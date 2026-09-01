@@ -1,69 +1,72 @@
-import Image from "next/image";
+import { Navbar } from "@/components/Navbar";
+import { DownloadForm } from "@/components/DownloadForm";
+import { PlatformFeatures } from "@/components/PlatformFeatures";
+import { FaqSection } from "@/components/FaqSection";
+import { Footer } from "@/components/Footer";
+import { IconSparkles, IconShieldCheck, IconBolt } from "@tabler/icons-react";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="relative min-h-[100dvh] bg-zinc-950 text-zinc-100 flex flex-col justify-between selection:bg-indigo-500/30 selection:text-indigo-200">
+      {/* Background Subtle Mesh / Glow */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 size-[600px] rounded-full bg-indigo-600/10 blur-[130px]" />
+        <div className="absolute top-1/3 -left-32 size-[400px] rounded-full bg-blue-600/10 blur-[120px]" />
+        <div className="absolute top-1/2 -right-32 size-[400px] rounded-full bg-pink-600/10 blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 flex flex-col flex-1">
+        <Navbar />
+
+        {/* Hero Section */}
+        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-4 pt-12 pb-16 text-center sm:px-6 sm:pt-20">
+          {/* Eyebrow Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-300 backdrop-blur-md">
+            <IconSparkles className="size-3.5 text-indigo-400" />
+            <span>Downloader Video & Audio No #1</span>
+          </div>
+
+          {/* Main Headline */}
+          <h1 className="mt-5 max-w-3xl text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Download Video & Audio{" "}
+            <span className="bg-gradient-to-r from-indigo-400 via-blue-400 to-pink-400 bg-clip-text text-transparent">
+              TikTok, IG & YouTube
+            </span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+          {/* Subtitle */}
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
+            Unduh video tanpa watermark dalam resolusi Full HD atau ubah langsung menjadi file audio MP3 berkualitas tinggi. Cepat, gratis, dan tanpa iklan mengganggu.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+          {/* Form Box */}
+          <div className="mt-8 w-full max-w-3xl">
+            <DownloadForm />
+          </div>
+
+          {/* Trust Highlights */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-zinc-400">
+            <div className="flex items-center gap-1.5">
+              <IconShieldCheck className="size-4 text-emerald-400" />
+              <span>Bebas Watermark & Iklan</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <IconBolt className="size-4 text-amber-400" />
+              <span>Konversi Instan ke MP4 & MP3</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <IconSparkles className="size-4 text-indigo-400" />
+              <span>Kualitas Audio Jernih 320kbps</span>
+            </div>
+          </div>
+        </main>
+
+        {/* Feature Grid & FAQ */}
+        <PlatformFeatures />
+        <FaqSection />
+      </div>
+
+      <Footer />
     </div>
   );
 }
