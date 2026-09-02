@@ -6,7 +6,7 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 font-mono text-xs text-zinc-400 sm:flex-row sm:px-6">
         <div className="flex items-center gap-2">
           <span className="font-bold text-white">SAVEAJA</span>
-          <span>© {new Date().getFullYear()}</span>
+          <span>© {new Date().getFullYear()} Rakha FR — All Rights Reserved</span>
         </div>
 
         <div className="flex items-center gap-4 text-zinc-400">
