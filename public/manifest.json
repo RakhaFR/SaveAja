@@ -1,0 +1,17 @@
+{
+  "name": "SaveAja - Universal Video & Audio Downloader",
+  "short_name": "SaveAja",
+  "description": "Download video TikTok tanpa watermark, Instagram Reels, dan YouTube ke format MP4 & MP3 gratis dan cepat.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
