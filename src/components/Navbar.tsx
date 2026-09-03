@@ -23,7 +23,7 @@ export function Navbar() {
         </Link>
 
         {/* Supported Platform Badges in Retro Style */}
-        <div className="flex items-center gap-2 font-mono text-[11px]">
+        <div className="hidden sm:flex items-center gap-2 font-mono text-[11px]">
           <span className="border border-white/40 bg-zinc-950 px-2 py-0.5 text-zinc-300">
             [TIKTOK]
           </span>
