@@ -14,31 +14,37 @@ function pickUserAgent(url: string): string {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
+  const targetUrl = searchParams.get('targetUrl');
   const mediaUrl = searchParams.get('mediaUrl');
   const formatId = searchParams.get('formatId');
   const format = searchParams.get('format') || 'mp4';
   const filename = searchParams.get('filename') || 'SaveAja_Media';
 
-  if (!mediaUrl || !formatId) {
-    return new NextResponse('Missing parameters', { status: 400 });
-  }
+  let downloadUrl = targetUrl;
 
   try {
-    // Re-fetch a FRESH signed URL at download time so it's bound to this server's IP
-    const platform = detectPlatform(mediaUrl);
-    if (platform === 'unknown') {
-      return new NextResponse('Platform tidak dikenali', { status: 400 });
+    // Fast path: use already-resolved direct targetUrl if provided
+    if (!downloadUrl) {
+      if (!mediaUrl || !formatId) {
+        return new NextResponse('Missing parameters', { status: 400 });
+      }
+
+      const platform = detectPlatform(mediaUrl);
+      if (platform === 'unknown') {
+        return new NextResponse('Platform tidak dikenali', { status: 400 });
+      }
+
+      const freshData = await extractMedia(mediaUrl);
+      const targetFormat = freshData.formats.find(f => f.id === formatId)
+        || freshData.formats.find(f => f.format === format);
+
+      if (!targetFormat) {
+        return new NextResponse('Format tidak tersedia', { status: 404 });
+      }
+
+      downloadUrl = targetFormat.url;
     }
 
-    const freshData = await extractMedia(mediaUrl);
-    const targetFormat = freshData.formats.find(f => f.id === formatId)
-      || freshData.formats.find(f => f.format === format);
-
-    if (!targetFormat) {
-      return new NextResponse('Format tidak tersedia', { status: 404 });
-    }
-
-    const downloadUrl = targetFormat.url;
     let contentType = 'video/mp4';
     if (format === 'mp3') {
       contentType = 'audio/mpeg';
@@ -63,7 +69,7 @@ export async function GET(req: NextRequest) {
     });
 
     const responseHeaders = new Headers();
-    responseHeaders.set('Content-Disposition', `attachment; filename="${fullFilename}"`);
+    responseHeaders.set('Content-Disposition', `attachment; filename="${encodeURIComponent(fullFilename)}"`);
     responseHeaders.set('Content-Type', contentType);
     if (response.headers['content-length']) {
       responseHeaders.set('Content-Length', String(response.headers['content-length']));

@@ -15,21 +15,39 @@ export function MediaResultCard({ data, onReset }: MediaResultCardProps) {
   const videoFormats = data.formats.filter((f) => f.type === "video");
   const audioFormats = data.formats.filter((f) => f.type === "audio");
 
-  const handleDownload = (format: MediaFormat) => {
+  const handleDownload = async (format: MediaFormat) => {
+    if (downloadingId) return;
     setDownloadingId(format.id);
 
-    // /api/download-file re-fetches a fresh signed URL server-side
-    // and pipes the entire stream without IP-bound redirect issues
-    const downloadHref = `/api/download-file?mediaUrl=${encodeURIComponent(data.url)}&formatId=${encodeURIComponent(format.id)}&format=${format.format}&filename=${encodeURIComponent(data.title)}`;
+    try {
+      const downloadHref = `/api/download-file?targetUrl=${encodeURIComponent(format.url)}&mediaUrl=${encodeURIComponent(data.url)}&formatId=${encodeURIComponent(format.id)}&format=${format.format}&filename=${encodeURIComponent(data.title)}`;
 
-    const link = document.createElement('a');
-    link.href = downloadHref;
-    link.download = `${data.title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50)}.${format.format}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const response = await fetch(downloadHref);
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
+      }
 
-    setTimeout(() => setDownloadingId(null), 3000);
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const cleanName = data.title.replace(/[^a-zA-Z0-9_\s-]/g, '_').substring(0, 50).trim();
+      const fullFilename = `${cleanName || 'media'}.${format.format}`;
+
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fullFilename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(objectUrl);
+      }, 1000);
+    } catch (error) {
+      console.error('Download trigger error:', error);
+      alert('Gagal mendownload media. Silakan coba klik download lagi.');
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
