@@ -3,7 +3,7 @@ export type Platform = 'tiktok' | 'instagram' | 'youtube' | 'unknown';
 export interface MediaFormat {
   id: string;
   type: 'video' | 'audio';
-  format: 'mp4' | 'mp3';
+  format: 'mp4' | 'mp3' | 'm4a';
   quality: string;
   url: string;
   size?: string;

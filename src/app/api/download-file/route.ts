@@ -39,7 +39,12 @@ export async function GET(req: NextRequest) {
     }
 
     const downloadUrl = targetFormat.url;
-    const contentType = format === 'mp3' ? 'audio/mpeg' : 'video/mp4';
+    let contentType = 'video/mp4';
+    if (format === 'mp3') {
+      contentType = 'audio/mpeg';
+    } else if (format === 'm4a') {
+      contentType = 'audio/mp4';
+    }
     const cleanFilename = filename.replace(/[^a-zA-Z0-9_\s-]/g, '_').substring(0, 60);
     const fullFilename = `${cleanFilename}.${format}`;
     const userAgent = pickUserAgent(downloadUrl);

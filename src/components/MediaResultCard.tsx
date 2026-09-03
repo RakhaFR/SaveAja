@@ -108,7 +108,7 @@ export function MediaResultCard({ data, onReset }: MediaResultCardProps) {
                     : "bg-black text-white hover:bg-zinc-900"
                 }`}
               >
-                AUDIO (MP3) [{audioFormats.length}]
+                AUDIO [{audioFormats.length}]
               </button>
             </div>
 
@@ -163,13 +163,13 @@ export function MediaResultCard({ data, onReset }: MediaResultCardProps) {
                       )}
                     </div>
 
-                    <button
-                      onClick={() => handleDownload(format)}
-                      disabled={downloadingId === format.id}
-                      className="retro-btn px-4 py-1.5 font-mono text-xs disabled:opacity-50"
-                    >
-                      {downloadingId === format.id ? "SAVING..." : "DOWNLOAD MP3"}
-                    </button>
+                      <button
+                        onClick={() => handleDownload(format)}
+                        disabled={downloadingId === format.id}
+                        className="retro-btn px-4 py-1.5 font-mono text-xs disabled:opacity-50"
+                      >
+                        {downloadingId === format.id ? "SAVING..." : `DOWNLOAD ${format.format.toUpperCase()}`}
+                      </button>
                   </div>
                 ))
               ) : (

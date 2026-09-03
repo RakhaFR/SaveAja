@@ -2,9 +2,44 @@ import { MediaMetadata, MediaFormat } from '../types';
 // @ts-ignore
 import { igdl } from 'btch-downloader';
 import axios from 'axios';
+import * as cheerio from 'cheerio';
+
+async function fetchInstagramCaption(url: string): Promise<{ title?: string; author?: string; authorUsername?: string }> {
+  try {
+    const shortcodeMatch = url.match(/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/);
+    const shortcode = shortcodeMatch ? shortcodeMatch[1] : '';
+    if (!shortcode) return {};
+
+    const embedRes = await axios.get(`https://www.instagram.com/p/${shortcode}/embed/captioned/`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+      timeout: 6000,
+    });
+
+    const $ = cheerio.load(embedRes.data);
+    const username = $('.CaptionUsername').text().trim() || $('.UsernameText').text().trim();
+    const fullCaption = $('.Caption').text().trim();
+    const cleanCaption = username && fullCaption.startsWith(username)
+      ? fullCaption.substring(username.length).trim()
+      : fullCaption;
+
+    const firstLine = cleanCaption.split('\n')[0]?.trim();
+    const title = firstLine && firstLine.length > 5 ? firstLine : undefined;
+
+    return {
+      title,
+      author: username || 'Instagram Creator',
+      authorUsername: username ? `@${username}` : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
 
 export async function extractInstagram(url: string): Promise<MediaMetadata> {
   const cleanUrl = url.trim();
+  const captionMeta = await fetchInstagramCaption(cleanUrl);
 
   // Method 1: btch-downloader (High reliability resolver for Reels, Posts, Stories)
   try {
@@ -22,15 +57,6 @@ export async function extractInstagram(url: string): Promise<MediaMetadata> {
           quality: '1080p / HD Video',
           url: videoUrl,
           note: 'Video Instagram Reels kualitas terbaik (MP4)',
-        });
-
-        formats.push({
-          id: 'ig-audio',
-          type: 'audio',
-          format: 'mp3',
-          quality: 'Audio MP3',
-          url: videoUrl,
-          note: 'Ekstraksi audio asli',
         });
       }
 
@@ -51,8 +77,9 @@ export async function extractInstagram(url: string): Promise<MediaMetadata> {
         id: `ig_${Date.now()}`,
         platform: 'instagram',
         url: cleanUrl,
-        title: 'Instagram Reel / Video',
-        author: 'Instagram Creator',
+        title: captionMeta.title || 'Instagram Reel',
+        author: captionMeta.author || 'Instagram Creator',
+        authorUsername: captionMeta.authorUsername,
         thumbnail: primary.thumbnail || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&auto=format&fit=crop&q=80',
         formats,
       };
@@ -87,14 +114,6 @@ export async function extractInstagram(url: string): Promise<MediaMetadata> {
             quality: 'HD Video (MP4)',
             url: directVideoUrl,
             note: 'Original stream',
-          },
-          {
-            id: 'ig-audio',
-            type: 'audio',
-            format: 'mp3',
-            quality: 'Audio MP3',
-            url: directVideoUrl,
-            note: 'Audio stream',
           }
         ];
 
@@ -102,8 +121,9 @@ export async function extractInstagram(url: string): Promise<MediaMetadata> {
           id: `ig_${shortcode}`,
           platform: 'instagram',
           url: cleanUrl,
-          title: 'Instagram Reel',
-          author: 'Instagram User',
+          title: captionMeta.title || 'Instagram Reel',
+          author: captionMeta.author || 'Instagram User',
+          authorUsername: captionMeta.authorUsername,
           thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&auto=format&fit=crop&q=80',
           formats,
         };

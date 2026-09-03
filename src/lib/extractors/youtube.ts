@@ -36,10 +36,10 @@ export async function extractYouTube(url: string): Promise<MediaMetadata> {
         formats.push({
           id: 'yt-audio',
           type: 'audio',
-          format: 'mp3',
-          quality: 'MP3 Audio',
+          format: 'm4a',
+          quality: 'M4A / AAC Audio',
           url: data.mp3,
-          note: 'Ekstraksi audio/musik dari video',
+          note: 'Audio kualitas tinggi asli YouTube',
         });
       }
 
