@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { extractMedia, detectPlatform } from '@/lib/extractors';
+import { fetchYouTubeDownloadUrl } from '@/lib/extractors/youtube';
 
 function pickUserAgent(url: string): string {
   try {
@@ -23,26 +24,29 @@ export async function GET(req: NextRequest) {
   let downloadUrl = targetUrl;
 
   try {
-    // Fast path: use already-resolved direct targetUrl if provided
-    if (!downloadUrl) {
-      if (!mediaUrl || !formatId) {
-        return new NextResponse('Missing parameters', { status: 400 });
+    // If targetUrl is not a direct http(s) URL or is a proxy path, resolve dynamically
+    if (!downloadUrl || downloadUrl.startsWith('/api/')) {
+      const urlToProcess = mediaUrl || (targetUrl && targetUrl.includes('mediaUrl=') ? new URL(targetUrl, 'http://localhost').searchParams.get('mediaUrl') : null);
+      
+      if (!urlToProcess) {
+        return new NextResponse('Missing video URL parameters', { status: 400 });
       }
 
-      const platform = detectPlatform(mediaUrl);
-      if (platform === 'unknown') {
-        return new NextResponse('Platform tidak dikenali', { status: 400 });
+      const platform = detectPlatform(urlToProcess);
+      if (platform === 'youtube') {
+        downloadUrl = await fetchYouTubeDownloadUrl(urlToProcess, format as any);
+      } else {
+        const freshData = await extractMedia(urlToProcess);
+        const targetFormat = freshData.formats.find(f => f.id === formatId)
+          || freshData.formats.find(f => f.format === format)
+          || freshData.formats[0];
+
+        if (!targetFormat || !targetFormat.url) {
+          return new NextResponse('Format tidak tersedia', { status: 404 });
+        }
+
+        downloadUrl = targetFormat.url;
       }
-
-      const freshData = await extractMedia(mediaUrl);
-      const targetFormat = freshData.formats.find(f => f.id === formatId)
-        || freshData.formats.find(f => f.format === format);
-
-      if (!targetFormat) {
-        return new NextResponse('Format tidak tersedia', { status: 404 });
-      }
-
-      downloadUrl = targetFormat.url;
     }
 
     let contentType = 'video/mp4';
@@ -55,7 +59,7 @@ export async function GET(req: NextRequest) {
     const fullFilename = `${cleanFilename}.${format}`;
     const userAgent = pickUserAgent(downloadUrl);
 
-    // Pipe directly from CDN through server to browser in one continuous connection
+    // Pipe directly from CDN through server to browser
     const response = await axios({
       method: 'GET',
       url: downloadUrl,

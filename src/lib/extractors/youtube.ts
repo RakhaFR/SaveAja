@@ -9,133 +9,141 @@ export function extractYouTubeId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-export async function extractYouTube(url: string): Promise<MediaMetadata> {
-  const videoId = extractYouTubeId(url);
-  if (!videoId) {
-    throw new Error('Link YouTube tidak valid. Format yang didukung: video biasa, shorts, atau youtu.be');
-  }
-
-  // Method 1: btch-downloader youtube function (most reliable, no blocked IPs)
+/**
+ * Dynamically resolves a direct downloadable file URL for YouTube using high-reliability scrapers.
+ */
+export async function fetchYouTubeDownloadUrl(videoUrl: string, format: 'mp4' | 'mp3' | '720' | '1080' = 'mp4'): Promise<string> {
+  const targetFmt = format === 'mp3' ? 'mp3' : '720';
+  
+  // Method 1: Loader.to API engine
   try {
-    const data: any = await youtube(url);
-    if (data && data.status && (data.mp4 || data.mp3)) {
-      const formats: MediaFormat[] = [];
-
-      if (data.mp4) {
-        formats.push({
-          id: 'yt-video',
-          type: 'video',
-          format: 'mp4',
-          quality: 'HD MP4 Video',
-          url: data.mp4,
-          note: 'Video YouTube kualitas tinggi',
+    const initRes = await axios.get('https://loader.to/ajax/download.php', {
+      params: { url: videoUrl, format: targetFmt },
+      timeout: 10000,
+    });
+    
+    if (initRes.data?.id) {
+      const taskId = initRes.data.id;
+      for (let i = 0; i < 25; i++) {
+        await new Promise((r) => setTimeout(r, 1200));
+        const progRes = await axios.get('https://loader.to/ajax/progress.php', {
+          params: { id: taskId },
+          timeout: 8000,
         });
+        
+        if (progRes.data?.success === 1 && progRes.data?.download_url) {
+          return progRes.data.download_url;
+        }
+        
+        if (progRes.data?.text && progRes.data.text.toLowerCase().includes('error')) {
+          break;
+        }
       }
-
-      if (data.mp3) {
-        formats.push({
-          id: 'yt-audio',
-          type: 'audio',
-          format: 'm4a',
-          quality: 'M4A / AAC Audio',
-          url: data.mp3,
-          note: 'Audio kualitas tinggi asli YouTube',
-        });
-      }
-
-      return {
-        id: videoId,
-        platform: 'youtube',
-        url,
-        title: data.title || 'YouTube Video',
-        author: data.author || 'YouTube Creator',
-        thumbnail: data.thumbnail || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-        formats,
-      };
     }
   } catch (err: any) {
-    console.warn('btch-downloader youtube failed:', err?.message);
+    console.warn('Loader.to conversion failed:', err?.message);
   }
 
-  // Method 2: Cobalt API instances fallback
+  // Method 2: btch-downloader
+  try {
+    const data: any = await youtube(videoUrl);
+    if (data && data.status) {
+      if (format === 'mp3' && data.mp3) return data.mp3;
+      if (data.mp4) return data.mp4;
+    }
+  } catch (err: any) {
+    console.warn('btch-downloader fallback failed:', err?.message);
+  }
+
+  // Method 3: Cobalt fallback instances
   const cobaltInstances = [
-    'https://api.cobalt.tools',
     'https://cobalt-api.kwiatekm.tokyo',
+    'https://cobalt.api.timelessoses.top',
     'https://co.wuk.sh',
   ];
 
-  // Fetch metadata via oembed (always works)
+  for (const inst of cobaltInstances) {
+    try {
+      const res = await axios.post(`${inst}/api/json`, {
+        url: videoUrl,
+        vQuality: '720',
+        isAudioOnly: format === 'mp3',
+        aFormat: 'mp3',
+      }, {
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        timeout: 6000,
+      });
+
+      if (res.data?.url) {
+        return res.data.url;
+      }
+    } catch {
+      // try next
+    }
+  }
+
+  throw new Error('Gagal menyiapkan link download YouTube. Silakan coba beberapa saat lagi.');
+}
+
+/**
+ * Extracts YouTube video metadata and formats.
+ */
+export async function extractYouTube(url: string): Promise<MediaMetadata> {
+  const videoId = extractYouTubeId(url);
+  if (!videoId) {
+    throw new Error('Link YouTube tidak valid. Format yang didukung: video biasa, Shorts, atau youtu.be');
+  }
+
+  const standardUrl = `https://www.youtube.com/watch?v=${videoId}`;
   let title = 'YouTube Video';
   let author = 'YouTube Creator';
   let thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
+  // Fetch verified metadata via official YouTube oEmbed API
   try {
     const oembedRes = await axios.get(
-      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+      `https://www.youtube.com/oembed?url=${encodeURIComponent(standardUrl)}&format=json`,
       { timeout: 5000 }
     );
     if (oembedRes.data) {
       title = oembedRes.data.title || title;
       author = oembedRes.data.author_name || author;
-      thumbnail = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+      thumbnail = oembedRes.data.thumbnail_url || thumbnail;
     }
-  } catch {
-    // fallback defaults already set
-  }
-
-  const formats: MediaFormat[] = [];
-
-  for (const instance of cobaltInstances) {
-    try {
-      const [videoRes, audioRes] = await Promise.allSettled([
-        axios.post(`${instance}/api/json`, {
-          url: `https://www.youtube.com/watch?v=${videoId}`,
-          vQuality: '720',
-          filenamePattern: 'classic',
-        }, {
-          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-          timeout: 6000,
-        }),
-        axios.post(`${instance}/api/json`, {
-          url: `https://www.youtube.com/watch?v=${videoId}`,
-          isAudioOnly: true,
-          aFormat: 'mp3',
-        }, {
-          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-          timeout: 6000,
-        }),
-      ]);
-
-      if (videoRes.status === 'fulfilled' && videoRes.value.data?.url) {
-        formats.push({
-          id: 'yt-video',
-          type: 'video',
-          format: 'mp4',
-          quality: '720p HD Video',
-          url: videoRes.value.data.url,
-        });
-      }
-
-      if (audioRes.status === 'fulfilled' && audioRes.value.data?.url) {
-        formats.push({
-          id: 'yt-audio',
-          type: 'audio',
-          format: 'mp3',
-          quality: 'MP3 Audio',
-          url: audioRes.value.data.url,
-          note: 'Ekstraksi audio dari video',
-        });
-      }
-
-      if (formats.length > 0) break;
-    } catch {
-      // try next instance
+  } catch (err: any) {
+    if (err?.response && (err.response.status === 404 || err.response.status === 400 || err.response.status === 401 || err.response.status === 403)) {
+      throw new Error('Video YouTube tidak ditemukan, bersifat privat, atau telah dihapus oleh pemiliknya.');
     }
+    console.warn('YouTube oembed warning:', err?.message);
   }
 
-  if (formats.length === 0) {
-    throw new Error('Gagal mengambil link download YouTube. Coba beberapa saat lagi.');
-  }
+  // Pre-configured formats for YouTube (fulfilled on-demand or fast resolved)
+  const formats: MediaFormat[] = [
+    {
+      id: 'yt-video-720',
+      type: 'video',
+      format: 'mp4',
+      quality: 'HD 720p Video (MP4)',
+      url: `/api/download-file?mediaUrl=${encodeURIComponent(standardUrl)}&formatId=yt-video-720&format=mp4&filename=${encodeURIComponent(title)}`,
+      note: 'Video kualitas jernih High Definition',
+    },
+    {
+      id: 'yt-audio-mp3',
+      type: 'audio',
+      format: 'mp3',
+      quality: 'High Quality MP3 Audio',
+      url: `/api/download-file?mediaUrl=${encodeURIComponent(standardUrl)}&formatId=yt-audio-mp3&format=mp3&filename=${encodeURIComponent(title)}`,
+      note: 'Audio musik kualitas jernih (320kbps)',
+    },
+  ];
 
-  return { id: videoId, platform: 'youtube', url, title, author, thumbnail, formats };
+  return {
+    id: videoId,
+    platform: 'youtube',
+    url: standardUrl,
+    title,
+    author,
+    thumbnail,
+    formats,
+  };
 }

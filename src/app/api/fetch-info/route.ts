@@ -28,13 +28,13 @@ export async function POST(req: NextRequest) {
       data,
     });
   } catch (error: any) {
-    console.error('API Fetch Info Error:', error);
+    console.error('API Fetch Info Error:', error?.message || error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Terjadi kesalahan saat memproses link. Silakan coba lagi.',
+        error: error.message || 'Terjadi kesalahan saat memproses link. Pastikan link dapat diakses publik.',
       },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }
