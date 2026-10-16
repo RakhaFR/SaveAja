@@ -14,29 +14,30 @@ export function extractYouTubeId(url: string): string | null {
  */
 export async function fetchYouTubeDownloadUrl(videoUrl: string, format: 'mp4' | 'mp3' | '720' | '1080' = 'mp4'): Promise<string> {
   const targetFmt = format === 'mp3' ? 'mp3' : '720';
-  
+
   // Method 1: Loader.to API engine
   try {
     const initRes = await axios.get('https://loader.to/ajax/download.php', {
       params: { url: videoUrl, format: targetFmt },
-      timeout: 10000,
+      timeout: 12000,
     });
-    
+
     if (initRes.data?.id) {
       const taskId = initRes.data.id;
-      for (let i = 0; i < 25; i++) {
-        await new Promise((r) => setTimeout(r, 1200));
-        const progRes = await axios.get('https://loader.to/ajax/progress.php', {
-          params: { id: taskId },
-          timeout: 8000,
-        });
-        
-        if (progRes.data?.success === 1 && progRes.data?.download_url) {
-          return progRes.data.download_url;
-        }
-        
-        if (progRes.data?.text && progRes.data.text.toLowerCase().includes('error')) {
-          break;
+      // prefer progress_url from init response (direct CDN endpoint, faster)
+      const progressUrl: string = initRes.data.progress_url
+        || `https://loader.to/ajax/progress.php?id=${taskId}`;
+
+      for (let i = 0; i < 50; i++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        try {
+          const progRes = await axios.get(progressUrl, { timeout: 8000 });
+          const d = progRes.data;
+          const done = d?.success === 1 || Number(d?.progress) >= 1000;
+          if (done && d?.download_url) return d.download_url;
+          if (d?.text && d.text.toLowerCase().includes('error')) break;
+        } catch {
+          // poll hiccup, keep retrying
         }
       }
     }
@@ -53,33 +54,6 @@ export async function fetchYouTubeDownloadUrl(videoUrl: string, format: 'mp4' | 
     }
   } catch (err: any) {
     console.warn('btch-downloader fallback failed:', err?.message);
-  }
-
-  // Method 3: Cobalt fallback instances
-  const cobaltInstances = [
-    'https://cobalt-api.kwiatekm.tokyo',
-    'https://cobalt.api.timelessoses.top',
-    'https://co.wuk.sh',
-  ];
-
-  for (const inst of cobaltInstances) {
-    try {
-      const res = await axios.post(`${inst}/api/json`, {
-        url: videoUrl,
-        vQuality: '720',
-        isAudioOnly: format === 'mp3',
-        aFormat: 'mp3',
-      }, {
-        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-        timeout: 6000,
-      });
-
-      if (res.data?.url) {
-        return res.data.url;
-      }
-    } catch {
-      // try next
-    }
   }
 
   throw new Error('Gagal menyiapkan link download YouTube. Silakan coba beberapa saat lagi.');
